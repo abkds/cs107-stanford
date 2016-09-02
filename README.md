@@ -1,4 +1,4 @@
-# Programming Paradigms : CS106B Stanford
+# Programming Paradigms : CS107 Stanford
 
 ### Assignments
 - [Assignment 1: RSG](https://see.stanford.edu/materials/icsppcs107/04-Assignment-1-RSG.pdf)
