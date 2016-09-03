@@ -27,3 +27,21 @@
 *.exe
 *.out
 *.app
+
+# Stanford library files
+**/StanfordCPPLib/*
+
+# spl.jar
+**/spl.jar
+
+# xcodeproj files
+**/*.xcodeproj/**
+
+# vagrant files
+**/.vagrant/*
+
+# plist files
+**/Info.plist
+
+# idea files
+**/.idea/*
