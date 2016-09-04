@@ -8,8 +8,8 @@ Grammar for a random math expression
 
 {
 <start>
-( <start> <operator> <start> ) ;
 <single> ;
+( <start> <operator> <start> ) ;
 }
 
 {
@@ -78,4 +78,3 @@ i ;
 598 ;
 2739918 ;
 }
-
