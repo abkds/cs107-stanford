@@ -38,6 +38,7 @@ const void *imdb::acquireFileMap(const string &fileName, struct fileInfo &info) 
     struct stat stats;
     stat(fileName.c_str(), &stats);
     info.fileSize = stats.st_size;
+    std::cout <<  "File size: " << info.fileSize << std::endl;
     info.fd = open(fileName.c_str(), O_RDONLY);
     return info.fileMap = mmap(0, info.fileSize, PROT_READ, MAP_SHARED, info.fd, 0);
 }

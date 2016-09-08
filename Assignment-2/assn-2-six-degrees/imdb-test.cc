@@ -63,10 +63,10 @@ static void listMovies(const string& player, const vector<film>& credits)
     while (numMovies < (credits.size() - kNumFilmsToPrint)) { numMovies++; ++curr; }
     for (;curr != credits.end(); ++curr) {
       const film& movie = *curr;
-      cout << setw(5) << ++numMovies << ".) " << movie.title << " (" << movie.year << ")" << endl;      
+      cout << setw(5) << ++numMovies << ".) " << movie.title << " (" << movie.year << ")" << endl;
     }
   }
-  
+
   stall();
 }
 
@@ -100,10 +100,10 @@ static void listCostars(const string &player, const vector<film>& credits, const
       if (costar != player) costars[costar].insert(movie);
     }
   }
-  
+
   cout << player << " has worked with " << (int) costars.size() << " other people." << endl;
   cout << "Those other people are:" << endl;
-  
+
   unsigned int numCostars = 0;
   map<string, set<film> >::const_iterator curr;
   for (curr = costars.begin(); curr != costars.end() && numCostars < kNumCostarsToPrint; ++curr) {
@@ -153,12 +153,12 @@ static void listAllMoviesAndCostars(const string& player,
 {
   vector<film> credits;
   if (!db.getCredits(player, credits) || credits.size() == 0) {
-    cout << "We're sorry, but " << player 
+    cout << "We're sorry, but " << player
 	 << " doesn't appear to be in our database." << endl;
     cout << "Perhaps someone else?" << endl;
     return;
   }
-  
+
   listMovies(player, credits);
   listCostars(player, credits, db);
 }
@@ -174,7 +174,7 @@ static void listAllMoviesAndCostars(const string& player,
  * actor/actresses.  It's possible that the actor/actresses
  * doesn't exist, but the listAllmoviesAndCostrars handles
  * that situation.
- * 
+ *
  * @param db a const reference to the imdb that should
  *           queried.
  */
@@ -195,7 +195,7 @@ static void queryForActors(const imdb& db)
  * --------------
  * Defines the entry point for the unit testing
  * program that exercises the imdb class.  Notice
- * that the imdb constructor is called, 
+ * that the imdb constructor is called,
  */
 
 int main(int argc, char **argv)
