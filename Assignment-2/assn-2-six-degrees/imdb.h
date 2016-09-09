@@ -89,8 +89,8 @@ private:
     const void *actorFile;
     const void *movieFile;
 
-    // utility to compare two c strings (whose pointer is given)
-    static int pstrcmp(const void * s1, const void * s2);
+    // utility to compare two players
+    static int playercmp(const void * s1, const void * s2);
 
     // everything below here is complicated and needn't be touched.
     // you're free to investigate, but you're on your own.

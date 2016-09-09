@@ -50,6 +50,17 @@ struct film {
 };
 
 /**
+ * Convenience struct: Key
+ * ------------------------
+ * Bundles the file pointer in memory, and the pkey generic
+ * pointer is a pointer to the key to be compared.
+ */
+struct Key {
+    void * file;
+    void * pkey;
+};
+
+/**
  * Quick, UNIX-dependent function to determine whether or not the
  * the resident OS is Linux or Solaris.  For our purposes, this
  * tells us whether the machine is big-endian or little-endian, and

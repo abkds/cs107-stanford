@@ -26,21 +26,19 @@ bool imdb::good() const {
 // you should be implementing these two methods right here...
 bool imdb::getCredits(const string &player, vector <film> &films) const {
     int nElements = * (int *) (actorFile);
-    const char * const cplayer = player.c_str();
+    void * cplayer = (void *) player.c_str();
 
-    /* actual locations calculated from offsets */
-    const char * actualLocations[nElements];
-
-    for (int i = 1; i <= nElements; i++) {
-        actualLocations[i-1] = (char *) actorFile + * ((int *) actorFile + i);
-    }
+    struct Key playerKey;
+    /* point to the starting of offsets */
+    playerKey.file = (void *) actorFile;
+    playerKey.pkey = cplayer;
 
     void * found = bsearch(
-                &cplayer,  // pointer to key
-                actualLocations, // pointer to base
+                &playerKey,  // pointer to key
+                (int *) actorFile + 1, // pointer to base
                 nElements, // number of elements
-                sizeof(char *), // size of element
-                pstrcmp // compare two pointer to pointer to c string
+                sizeof(int), // size of element
+                playercmp // compare two pointer to pointer to c string
             );
 
     if (found == NULL) return false;
@@ -54,7 +52,7 @@ bool imdb::getCredits(const string &player, vector <film> &films) const {
      */
 
     /* pointer to actor location in file */
-    char * record = * (char **) found;
+    char * record = (char *) actorFile + * (int *) found;
 
     /* keep count of bytes from start of record to short */
     int nBytesFromStart = 0;
@@ -102,7 +100,10 @@ bool imdb::getCredits(const string &player, vector <film> &films) const {
     return true;
 }
 
-bool imdb::getCast(const film &movie, vector <string> &players) const { return false; }
+bool imdb::getCast(const film &movie, vector <string> &players) const {
+
+    return false;
+}
 
 imdb::~imdb() {
     releaseFileMap(actorInfo);
@@ -110,8 +111,11 @@ imdb::~imdb() {
 }
 
 // utility to compare two c strings (whose pointer is given)
-int imdb::pstrcmp(const void * s1, const void * s2) {
-    return strcmp( * (char **) s1, * (char **) s2 );
+int imdb::playercmp(const void * s1, const void * s2) {
+    struct Key * pKey = (struct Key *) s1;
+    char * toCompare = (char *) pKey->file + * (int *) s2;
+
+    return strcmp( (const char *) pKey->pkey, toCompare );
 }
 
 // ignore everything below... it's all UNIXy stuff in place to make a file look like
