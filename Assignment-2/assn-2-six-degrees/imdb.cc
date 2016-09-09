@@ -63,7 +63,7 @@ bool imdb::getCredits(const string &player, vector <film> &films) const {
         nBytesFromStart += (player.size() + 2);
     } else {
         record += player.size() + 1;
-        nBytesFromStart += player.size();
+        nBytesFromStart += player.size() + 1;
     }
 
     short nMovies =  * (short *) record;
@@ -101,8 +101,58 @@ bool imdb::getCredits(const string &player, vector <film> &films) const {
 }
 
 bool imdb::getCast(const film &movie, vector <string> &players) const {
+    int nElements = * (int *) movieFile;
 
-    return false;
+    struct Key movieKey;
+    movieKey.file = (void *) movieFile;
+    movieKey.pkey = (void *) &movie;
+
+    void * found = bsearch(
+                    &movieKey,  // pointer to key
+                    (int *) movieFile + 1, // pointer to base
+                    nElements, // number of elements
+                    sizeof(int), // size of element
+                    moviecmp // compare two pointer to pointer to c string
+                );
+
+    if (found == NULL) return false;
+
+    /* point to movie record in memory */
+    char * record = (char *) movieFile + * (int *) found;
+
+    int numBytesFromStart = 0;
+    /* skip the number of bytes for movie name and year, if the total
+     * number of bytes is odd, skip one more byte
+     */
+    numBytesFromStart += movie.title.size() + 2;
+    record += (movie.title.size() + 2);
+    if (numBytesFromStart % 2 != 0) {
+        numBytesFromStart++;
+        record++;
+    }
+
+    short nPlayers =  * (short *) record;
+    numBytesFromStart += 2;
+    record += 2;
+
+    /* move to start of movie names */
+    if (numBytesFromStart % 4 != 0) record += 2;
+
+    for (short i = 0; i < nPlayers; i++) {
+        /* calculate offset into movie file in memory */
+        char * actorRecord = (char *) actorFile + * (int *) record;
+        record += 4;
+
+        string name;
+        while (*actorRecord != '\0') {
+            name += *actorRecord;
+            actorRecord++;
+        }
+
+        players.push_back(name);
+    }
+
+    return true;
 }
 
 imdb::~imdb() {
@@ -116,6 +166,35 @@ int imdb::playercmp(const void * s1, const void * s2) {
     char * toCompare = (char *) pKey->file + * (int *) s2;
 
     return strcmp( (const char *) pKey->pkey, toCompare );
+}
+
+int imdb::moviecmp(const void * s1, const void * s2) {
+    struct Key * pKey = (struct Key *) s1;
+    char * toCompare = (char *) pKey->file + * (int *) s2;
+
+    struct film * pfilmKey = (struct film *) pKey->pkey;
+
+    string title;
+    while (*toCompare != '\0') {
+        title += *toCompare;
+        toCompare++;
+    }
+
+    /* Skip \0 at end of string */
+    toCompare++;
+
+    /* year byte contains an offset from 1900 */
+    int year = *toCompare + 1900;
+
+    struct film filmToCompare;
+    filmToCompare.title = title;
+    filmToCompare.year = year;
+
+
+    /* compare the two films using overlaoded operator */
+    if (*pfilmKey < filmToCompare) return -1;
+    else if (*pfilmKey == filmToCompare) return 0;
+    else return 1;
 }
 
 // ignore everything below... it's all UNIXy stuff in place to make a file look like

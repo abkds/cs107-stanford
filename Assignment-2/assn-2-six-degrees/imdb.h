@@ -92,6 +92,9 @@ private:
     // utility to compare two players
     static int playercmp(const void * s1, const void * s2);
 
+    // utility to compare two movies
+    static int moviecmp(const void * s1, const void * s2);
+
     // everything below here is complicated and needn't be touched.
     // you're free to investigate, but you're on your own.
     struct fileInfo {
