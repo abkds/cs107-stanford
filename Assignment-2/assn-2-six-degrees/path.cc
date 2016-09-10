@@ -12,7 +12,7 @@ using namespace std;
  * another.
  */
 
-path::path(const string& player) : startPlayer(player) {} 
+path::path(const string& player) : startPlayer(player) {}
 // ommission of links from init list calls the default constructor
 
 /**
@@ -24,55 +24,55 @@ path::path(const string& player) : startPlayer(player) {}
 
 void path::addConnection(const film& movie, const string& player)
 {
-  links.push_back(connection(movie, player));
-} 
+    links.push_back(connection(movie, player));
+}
 
 /**
- * Remove the last connection pair 
+ * Remove the last connection pair
  * if there is one.
  */
 
 void path::undoConnection()
 {
-  if (links.size() == 0) return;
-  links.pop_back();
+    if (links.size() == 0) return;
+    links.pop_back();
 }
 
 /**
- * Returns the last player (actor/actress) currently 
+ * Returns the last player (actor/actress) currently
  * in the path.
  */
 
 const string& path::getLastPlayer() const
 {
-  if (links.size() == 0) return startPlayer;
-  return links.back().player;
+    if (links.size() == 0) return startPlayer;
+    return links.back().player;
 }
 
 void path::reverse()
 {
-  // construct the reverse
-  path reverseOfPath(getLastPlayer());
-  for (int i = links.size() - 1; i > 0; i--)
-    reverseOfPath.addConnection(links[i].movie, links[i-1].player);
-  if (links.size() > 0)
-    reverseOfPath.addConnection(links[0].movie, startPlayer);
+    // construct the reverse
+    path reverseOfPath(getLastPlayer());
+    for (int i = links.size() - 1; i > 0; i--)
+        reverseOfPath.addConnection(links[i].movie, links[i-1].player);
+    if (links.size() > 0)
+        reverseOfPath.addConnection(links[0].movie, startPlayer);
 
-  // then assign self to its reverse
-  *this = reverseOfPath;
+    // then assign self to its reverse
+    *this = reverseOfPath;
 }
 
 ostream& operator<<(ostream& os, const path& p)
 {
-  if (p.links.size() == 0) return os << string("[Empty path]") << endl;
-  
-  os << "\t" << p.startPlayer << " was in ";
-  for (int i = 0; i < (int) p.links.size(); i++) {
-    os << "\"" << p.links[i].movie.title << "\" (" << p.links[i].movie.year << ") with " 
-       << p.links[i].player << "." << endl;
-    if (i + 1 == (int) p.links.size()) break;
-    os << "\t" << p.links[i].player << " was in ";
-  }
+    if (p.links.size() == 0) return os << string("[Empty path]") << endl;
 
-  return os;
+    os << "\t" << p.startPlayer << " was in ";
+    for (int i = 0; i < (int) p.links.size(); i++) {
+        os << "\"" << p.links[i].movie.title << "\" (" << p.links[i].movie.year << ") with "
+           << p.links[i].player << "." << endl;
+        if (i + 1 == (int) p.links.size()) break;
+        os << "\t" << p.links[i].player << " was in ";
+    }
+
+    return os;
 }
