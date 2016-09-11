@@ -22,7 +22,7 @@ void VectorNew(vector *v, int elemSize, VectorFreeFunction freeFn, int initialAl
     assert(elemSize > 0);
     v->elemSize = elemSize;
     v->freeFn = freeFn;
-    assert(initialAllocation > 0);
+    assert(initialAllocation > -1);
     if (initialAllocation == 0) initialAllocation = 4;
     v->capacity = initialAllocation;
     v->size = 0;
@@ -138,19 +138,20 @@ void VectorMap(vector *v, VectorMapFunction mapFn, void *auxData) {
  */
 static const int kNotFound = -1;
 int VectorSearch(const vector *v, const void *key, VectorCompareFunction searchFn, int startIndex, bool isSorted) {
-    assert(startIndex >= 0 && startIndex < v->size);
+    assert(startIndex >= 0 && startIndex <= v->size);
     assert(key != NULL && searchFn != NULL);
     void * found = NULL;
+
     if (isSorted) {
         found = bsearch(
             key,
             ((char *) v->array + v->elemSize * startIndex),
-            v->size - startIndex + 1,
+            v->size - startIndex,
             v->elemSize,
             searchFn
         );
     } else {
-        size_t nElements = v->size - startIndex + 1;
+        size_t nElements = v->size - startIndex;
         found = lfind(
             key,
             ((char *) v->array + v->elemSize * startIndex),
