@@ -9,13 +9,12 @@
 #ifndef _indexutils_
 #define _indexutils_
 
-#include "string-utils.h"
 #include "vector.h"
 
 typedef struct {
     char * key;
     vector * articles;
-} index;
+} Index;
 
 /**
  * Function: IndexCompare
@@ -38,6 +37,6 @@ int IndexHash(const void * elemAddr, int numBuckets);
  * Frees the memory associated with a single index struct stored
  * in a generic container.
  */
-void IndexFree(const void * elemAddr);
+void IndexFree(void * elemAddr);
 
 #endif

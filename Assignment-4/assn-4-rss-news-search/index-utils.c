@@ -11,29 +11,29 @@
  * compared on the basis of their key.
  */
 int IndexCompare(const void * elemAddr1, const void * elemAddr2) {
-    index * index1 = (index *) elemAddr1;
-    index * index2 = (index *) elemAddr2;
+    Index * index1 = (Index *) elemAddr1;
+    Index * index2 = (Index *) elemAddr2;
     return StringCompare(&(index1->key), &(index2->key));
 }
 
 /**
  * Function: IndexHash
  * -------------------
- * Piggybacks on StringHash to hash an index into hashset.
+ * Piggybacks on StringHash to hash an Index into hashset.
  */
 int IndexHash(const void * elemAddr, int numBuckets) {
-    index * idx = (index *) elemAddr;
+    Index * idx = (Index *) elemAddr;
     return StringHash(&(idx->key), numBuckets);
 }
 
 /**
  * Function: IndexFree
  * -------------------
- * Frees the memory associated with a single index struct stored
+ * Frees the memory associated with a single Index struct stored
  * in a generic container.
  */
-void IndexFree(const void * elemAddr) {
-    index * idx = (index *) elemAddr;
+void IndexFree(void * elemAddr) {
+    Index * idx = (Index *) elemAddr;
     free(idx->key);
     VectorDispose(idx->articles);
 }
