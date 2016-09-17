@@ -11,19 +11,22 @@
 #include "streamtokenizer.h"
 #include "html-utils.h"
 #include "string-utils.h"
+#include "article-utils.h"
+#include "index-utils.h"
+#include "vector.h"
 
 static void Welcome(const char *welcomeTextFileName);
-static void BuildIndices(const char *feedsFileName, const hashset * stopWords);
-static void ProcessFeed(const char *remoteDocumentName, const hashset * stopWords);
-static void PullAllNewsItems(urlconnection *urlconn, const hashset * stopWords);
+static void BuildIndices(const char *feedsFileName, const hashset * stopWords, hashset * index);
+static void ProcessFeed(const char *remoteDocumentName, const hashset * stopWords, hashset * index);
+static void PullAllNewsItems(urlconnection *urlconn, const hashset * stopWords, hashset * index);
 static bool GetNextItemTag(streamtokenizer *st);
-static void ProcessSingleNewsItem(streamtokenizer *st, const hashset * stopWords);
+static void ProcessSingleNewsItem(streamtokenizer *st, const hashset * stopWords, hashset * index);
 static void ExtractElement(streamtokenizer *st, const char *htmlTag, char dataBuffer[], int bufferLength);
-static void ParseArticle(const char *articleTitle, const char *articleDescription, const char *articleURL, const hashset * stopWords);
-static void ScanArticle(streamtokenizer *st, const char *articleTitle, const char *unused, const char *articleURL, const hashset * stopWords);
-static void QueryIndices(const hashset * stopWords);
-static void ProcessResponse(const char *word);
-static bool WordIsWellFormed(const char *word);
+static void ParseArticle(const char *articleTitle, const char *articleDescription, const char *articleURL, const hashset * stopWords, hashset * index);
+static void ScanArticle(streamtokenizer *st, const char *articleTitle, const char *unused, const char *articleURL, const hashset * stopWords, hashset * index);
+static void QueryIndices(const hashset * stopWords, hashset * index);
+static void ProcessResponse(const char *word, hashset * index);
+static bool WordIsWellFormed(const char *word, hashset * index);
 static void MakeStopWordsSet(hashset * stopWords);
 
 /**
@@ -50,7 +53,8 @@ int main(int argc, char **argv) {
     Welcome(kWelcomeTextFile);
     hashset * stopWords = malloc(sizeof(hashset));
     MakeStopWordsSet(stopWords);
-    //BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1], stopWords);
+    hashset * index;
+    BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1], stopWords, index);
     //QueryIndices(stopWords);
     HashSetDispose(stopWords);
     free(stopWords);
@@ -106,7 +110,7 @@ static void Welcome(const char *welcomeTextFileName)
  * document and index its content.
  */
 
-static void BuildIndices(const char *feedsFileName, const hashset * stopWords)
+static void BuildIndices(const char *feedsFileName, const hashset * stopWords, hashset * index)
 {
     FILE *infile;
     streamtokenizer st;
@@ -137,7 +141,7 @@ static void BuildIndices(const char *feedsFileName, const hashset * stopWords)
  * for ParseArticle for information about what the different response codes mean.
  */
 
-static void ProcessFeed(const char *remoteDocumentName, const hashset * stopWords)
+static void ProcessFeed(const char *remoteDocumentName, const hashset * stopWords, hashset * index)
 {
     url u;
     urlconnection urlconn;
@@ -191,7 +195,7 @@ static void ProcessFeed(const char *remoteDocumentName, const hashset * stopWord
  */
 
 static const char *const kTextDelimiters = " \t\n\r\b!@$%^*()_+={[}]|\\'\":;/?.>,<~`";
-static void PullAllNewsItems(urlconnection *urlconn, const hashset * stopWords)
+static void PullAllNewsItems(urlconnection *urlconn, const hashset * stopWords, hashset * index)
 {
     streamtokenizer st;
     STNew(&st, urlconn->dataStream, kTextDelimiters, false);
