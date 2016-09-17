@@ -20,14 +20,22 @@
  * This hash function has the additional feature of being case-insensitive,
  * hashing "Peter Pawlowski" and "PETER PAWLOWSKI" to the same code.
  */
-int StringHash(const char *s, int numBuckets);
+int StringHash(const void * elemAddr, int numBuckets);
 
 /**
  * Function: StringFree
  * --------------------
  * Free the memory allocated for the string, whose
- * pointer is stored in the element. 
+ * pointer is stored in the element.
  */
 void StringFree(void * elemAddr);
+
+/**
+ * Function: StringCompare
+ * -----------------------
+ * Wrapper function over C strcmp function, for usage
+ * in generic containers.
+ */
+int StringCompare(const void * elemAddr1, const void * elemAddr2);
 
 #endif

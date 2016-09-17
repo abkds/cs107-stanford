@@ -16,12 +16,12 @@ ifeq ($(OSTYPE), solaris)
 endif
 
 CFLAGS = -g -Wall -std=gnu99 -Wno-unused-function $(DFLAG)
-LDFLAGS = -g $(SOCKETLIB) -lrssnews -L/Users/abkds/cs107-stanford/Assignment-4/assn-4-rss-news-search-lib/$(OSTYPE)
+LDFLAGS = -g $(SOCKETLIB) -lnsl -lrssnews -L/vagrant/Assignment-4/assn-4-rss-news-search-lib/$(OSTYPE)
 PFLAGS= -linker=/usr/pubsw/bin/ld -best-effort
 
 EFENCELIBS= -L/usr/class/cs107/lib -lefence  -pthread
 
-SRCS = rss-news-search.c
+SRCS = rss-news-search.c string-utils.c
 OBJS = $(SRCS:.c=.o)
 TARGET = rss-news-search
 TARGET-PURE = rss-news-search.purify
@@ -31,7 +31,7 @@ default : $(TARGET)
 rss-news-search : $(OBJS)
 	$(CC) $(OBJS) $(CFLAGS)$(LDFLAGS) -o $@
 
-efence : rss-news-search.efence  
+efence : rss-news-search.efence
 
 rss-news-search.efence : $(OBJS)
 	$(CC) $(OBJS) $(CFLAGS)$(LDFLAGS) $(EFENCELIBS) -o $@
@@ -46,7 +46,7 @@ rss-news-search.purify : $(OBJS)
 # the action taken uses the $(CC) and $(CFLAGS) variables.
 # These lines describe a few extra dependencies involved
 
-clean : 
+clean :
 	@echo "Removing all object files..."
 	/bin/rm -f *.o a.out core $(TARGET) $(TARGET-PURE)
 

@@ -45,12 +45,13 @@ static void MakeStopWordsSet(hashset * stopWords);
 
 static const char *const kWelcomeTextFile = "/vagrant/assignments/assn-4-rss-news-search-data/welcome.txt";
 static const char *const kDefaultFeedsFile = "/vagrant/assignments/assn-4-rss-news-search-data/rss-feeds.txt";
+static const char *const kStopWordsFile = "/vagrant/assignments/assn-4-rss-news-search-data/stop-words.txt";
 int main(int argc, char **argv) {
     Welcome(kWelcomeTextFile);
     hashset * stopWords = malloc(sizeof(hashset));
     MakeStopWordsSet(stopWords);
-    BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1], stopWords);
-    QueryIndices(stopWords);
+    //BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1], stopWords);
+    //QueryIndices(stopWords);
     HashSetDispose(stopWords);
     free(stopWords);
     return 0;
@@ -453,6 +454,11 @@ static bool WordIsWellFormed(const char *word)
     return true;
 }
 
+void PrintString(void * elemAddr, void * auxData) {
+    char * s = * (char **) elemAddr;
+    printf("%s\n", s);
+}
+
 /**
  * Function: MakeStopWordsSet
  * --------------------------
@@ -460,6 +466,24 @@ static bool WordIsWellFormed(const char *word)
  * Stop words are uninteresting words which occur very frequently
  * in different articles. It's futile to index on stop words.
  */
+static const int numBuckets = 1007;
 static void MakeStopWordsSet(hashset * stopWords) {
-    
+    HashSetNew(stopWords, sizeof(char *), numBuckets, StringHash, StringCompare, StringFree);
+    FILE *infile;
+    streamtokenizer st;
+    char buffer[50];
+
+    infile = fopen(kStopWordsFile, "r");
+    printf("%s\n", kStopWordsFile);
+    assert(infile != NULL);
+
+    STNew(&st, infile, kNewLineDelimiters, true);
+    while (STNextToken(&st, buffer, sizeof(buffer))) {
+        char * string = strdup(buffer);
+        HashSetEnter(stopWords, &string);
+    }
+
+    STDispose(&st); // remember that STDispose doesn't close the file, since STNew doesn't open one..
+    fclose(infile);
+
 }
