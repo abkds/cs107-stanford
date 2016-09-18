@@ -1,6 +1,7 @@
 #include "string-utils.h"
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
 
 /**
  * Function: StringHash
@@ -37,4 +38,15 @@ void StringFree(void * elemAddr) {
  */
 int StringCompare(const void * elemAddr1, const void * elemAddr2) {
     return strcmp(* (char **) elemAddr1, * (char **) elemAddr2);
+}
+
+/**
+ * Function: ToLower
+ * -----------------------
+ * Converts a mixed-case string to all lower case.
+ */
+void ToLower(char * word) {
+    for (int i = 0; word[i]; i++) {
+        word[i] = tolower(word[i]);
+    }
 }

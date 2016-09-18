@@ -38,4 +38,11 @@ void StringFree(void * elemAddr);
  */
 int StringCompare(const void * elemAddr1, const void * elemAddr2);
 
+/**
+ * Function: ToLower
+ * -----------------------
+ * Converts a mixed-case string to all lower case.
+ */
+void ToLower(char * word);
+
 #endif
