@@ -44,6 +44,12 @@ void PrintArticle(void * elemAddr, void * auxData) {
 
 }
 
+void ArticleSort(void * elemAddr, void * auxData) {
+    Index * idx = (Index *) elemAddr;
+    vector * v = (vector *) idx->articles;
+    VectorSort(v, ArticleCompare);
+}
+
 /**
  * Function: main
  * --------------
@@ -78,14 +84,11 @@ int main(int argc, char **argv) {
     hashset * indices = malloc(sizeof(hashset));
     HashSetNew(indices, sizeof(Index), numBigBucket, IndexHash, IndexCompare, IndexFree);
 
-
-    printf("Stop words size: %d\n", HashSetCount(stopWords) );
     BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1], stopWords, seenArticleUrls, indices);
 
     //HashSetMap(indices, PrintIndex, NULL);
-    printf("Indices size:  %d\n", HashSetCount(indices));
-
-    //QueryIndices(stopWords, indices);
+    HashSetMap(indices, ArticleSort, NULL);
+    QueryIndices(stopWords, indices);
 
     /* Free memory allocated for hash sets */
     HashSetDispose(stopWords);
@@ -237,7 +240,6 @@ static void PullAllNewsItems(urlconnection *urlconn, hashset * stopWords, hashse
     streamtokenizer st;
     STNew(&st, urlconn->dataStream, kTextDelimiters, false);
     while (GetNextItemTag(&st)) { // if true is returned, then assume that <item ...> has just been read and pulled from the data stream
-        printf("Processing Single News Items\n");
         ProcessSingleNewsItem(&st, stopWords, seenArticleUrls, indices);
     }
 
@@ -376,7 +378,7 @@ static void ParseArticle(const char *articleTitle, const char *articleDescriptio
     streamtokenizer st;
 
     /* If url already seen before, return */
-    //if (HashSetLookup(seenArticleUrls, &articleURL) == NULL) return;
+    if (HashSetLookup(seenArticleUrls, &articleURL) != NULL) return;
 
     URLNewAbsolute(&u, articleURL);
     URLConnectionNew(&urlconn, &u);
@@ -384,10 +386,10 @@ static void ParseArticle(const char *articleTitle, const char *articleDescriptio
     switch (urlconn.responseCode) {
         case 0: printf("Unable to connect to \"%s\".  Domain name or IP address is nonexistent.\n", articleURL);
             break;
-        case 200: printf("Scanning \"%s\" from \"http://%s\"\n", articleTitle, u.serverName);
+        case 200: printf("[%s] Indexing \"%s\"", u.serverName, articleURL);
             STNew(&st, urlconn.dataStream, kTextDelimiters, false);
-            //char * articleUrl = strdup(articleURL);
-            //HashSetEnter(seenArticleUrls, &articleUrl);
+            char * articleUrl = strdup(articleURL);
+            HashSetEnter(seenArticleUrls, &articleUrl);
             ScanArticle(&st, articleTitle, articleDescription, articleURL, stopWords, seenArticleUrls, indices);
             STDispose(&st);
             break;
@@ -515,17 +517,16 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
     aux.articleTitle = strdup(articleTitle);
     aux.indices = indices;
 
-    //HashSetMap(frequencies, PrintFrequency, NULL);
     HashSetMap(frequencies, MapFrequencyToIndices, &aux);
 
     free(aux.articleURL);
     free(aux.articleTitle);
 
     HashSetDispose(frequencies);
-    printf("\tWe counted %d well-formed words [including duplicates].\n", numWords);
+    /*printf("\tWe counted %d well-formed words [including duplicates].\n", numWords);
     printf("\tThe longest word scanned was \"%s\".", longestWord);
     if (strlen(longestWord) >= 15 && (strchr(longestWord, '-') == NULL))
-        printf(" [Ooooo... long word!]");
+        printf(" [Ooooo... long word!]");*/
     printf("\n");
 }
 
@@ -554,15 +555,40 @@ static void QueryIndices(const hashset * stopWords, hashset * indices) {
  * Placeholder implementation for what will become the search of a set of indices
  * for a list of web documents containing the specified word.
  */
-
+static const int kNumArticlesToShow = 10;
 static void ProcessResponse(const char *word, hashset * indices)
 {
+    char * word_ = strdup(word);
+    ToLower(word_);
     if (WordIsWellFormed(word)) {
-        printf("\tWell, we don't have the database mapping words to online news articles yet, but if we DID have\n");
-        printf("\tour hashset of indices, we'd list all of the articles containing \"%s\".\n", word);
+        Index idx;
+        idx.key = word_;
+        idx.articles = NULL;
+
+        Index * found = (Index *) HashSetLookup(indices, &idx);
+        if (found == NULL) {
+            printf("None of today's news articles contain the word \"%s\".\n\n", word);
+        } else {
+            printf("Nice! We found %d articles that include the word \"%s\"\n\n", VectorLength(found->articles), word);
+            int n;
+            if (VectorLength(found->articles) >= kNumArticlesToShow) {
+                n = kNumArticlesToShow;
+            } else {
+                n = VectorLength(found->articles);
+            }
+
+            for (int i = 0; i < n; i++) {
+                article * ar = (article *) VectorNth(found->articles, i);
+                printf("        %d.) \"%s\" [search term appears %d times]\n", i+1, ar->articleTitle, ar->count);
+                printf("             \"%s\"\n", ar->articleURL);
+            }
+            printf("\n");
+        }
     } else {
         printf("\tWe won't be allowing words like \"%s\" into our set of indices.\n", word);
     }
+
+    free(word_);
 }
 
 /**
