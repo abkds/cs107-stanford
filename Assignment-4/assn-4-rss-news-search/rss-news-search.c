@@ -29,6 +29,20 @@ static void ProcessResponse(const char *word, hashset * indices);
 static bool WordIsWellFormed(const char *word);
 static void MakeStopWordsSet(hashset * stopWords);
 void PrintString(void * elemAddr, void * auxData);
+void PrintIndex(void * elemAddr, void * auxData) {
+    Index * idx = (Index *) elemAddr;
+    vector * v = (vector *) idx->articles;
+    printf("%s : %d\n", idx->key, VectorLength(v));
+}
+
+void PrintArticle(void * elemAddr, void * auxData) {
+    article * ar = (article *) elemAddr;
+
+    printf(" Article Name: %s\n", ar->articleTitle);
+    printf(" Article URL: %s\n", ar->articleURL);
+    printf(" Count: %d\n", ar->count);
+
+}
 
 /**
  * Function: main
@@ -67,6 +81,10 @@ int main(int argc, char **argv) {
 
     printf("Stop words size: %d\n", HashSetCount(stopWords) );
     BuildIndices((argc == 1) ? kDefaultFeedsFile : argv[1], stopWords, seenArticleUrls, indices);
+
+    //HashSetMap(indices, PrintIndex, NULL);
+    printf("Indices size:  %d\n", HashSetCount(indices));
+
     //QueryIndices(stopWords, indices);
 
     /* Free memory allocated for hash sets */
@@ -391,6 +409,55 @@ void PrintFrequency(void * elemAddr, void * auxData) {
 }
 
 /**
+ * Type: auxStruct
+ * ---------------
+ * Auxiliary struct to pass into HashSetMap function,
+ * to hold url, title and set of indices.
+ */
+typedef struct {
+    char * articleURL;
+    char * articleTitle;
+    hashset * indices;
+} auxStruct;
+
+/**
+ * Function: MapFrequencyToIndices
+ * -------------------------------
+ * Maps the frequency counts for a single article into indices.
+ * Indices cotain the complete index for each article.
+ */
+void MapFrequencyToIndices(void * elemAddr, void * auxData) {
+    frequency * fq = (frequency *) elemAddr;
+    auxStruct * aux = (auxStruct *) auxData;
+
+    /* search if an existing index is there, if index not found
+     * prepare and insert it into indices, otherwise just extend
+     * exisiting index
+     */
+    Index idx;
+    idx.key = fq->key;
+    idx.articles = NULL;
+
+    article ae;
+    ae.articleURL = strdup(aux->articleURL);
+    ae.articleTitle = strdup(aux->articleTitle);
+    ae.count = fq->count;
+
+    Index * found = (Index *) HashSetLookup(aux->indices, &idx);
+    if (found == NULL) {
+        Index ix;
+        ix.key = strdup(fq->key);
+        ix.articles = malloc(sizeof(vector));
+
+        VectorNew(ix.articles, sizeof(article), ArticleFree, 0);
+        VectorAppend(ix.articles, &ae);
+        HashSetEnter(aux->indices, &ix);
+    } else {
+        VectorAppend(found->articles, &ae);
+    }
+}
+
+/**
  * Function: ScanArticle
  * ---------------------
  * Parses the specified article, skipping over all HTML tags, and counts the numbers
@@ -408,7 +475,6 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
     int numWords = 0;
     char word[1024];
     char longestWord[1024] = {'\0'};
-    //printf("Stop words size: %d\n", HashSetCount(stopWords) );
 
     /* hashset for storing counts of various words in a single article */
     hashset * frequencies = malloc(sizeof(hashset));
@@ -422,8 +488,6 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
             char *pWord = word;
             ToLower(pWord);
             if (WordIsWellFormed(pWord) && HashSetLookup(stopWords, &pWord) == NULL) {
-                //printf("%s ", word);
-
                 frequency fq;
 
                 fq.key = pWord;
@@ -445,7 +509,18 @@ static void ScanArticle(streamtokenizer *st, const char *articleTitle, const cha
         }
     }
 
-    HashSetMap(frequencies, PrintFrequency, NULL);
+
+    auxStruct aux;
+    aux.articleURL = strdup(articleURL);
+    aux.articleTitle = strdup(articleTitle);
+    aux.indices = indices;
+
+    //HashSetMap(frequencies, PrintFrequency, NULL);
+    HashSetMap(frequencies, MapFrequencyToIndices, &aux);
+
+    free(aux.articleURL);
+    free(aux.articleTitle);
+
     HashSetDispose(frequencies);
     printf("\tWe counted %d well-formed words [including duplicates].\n", numWords);
     printf("\tThe longest word scanned was \"%s\".", longestWord);
